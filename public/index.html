@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor de Proyectos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    form { margin-bottom: 1em; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 0.5em 0; }
+    button { margin-left: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Gestor de Proyectos</h1>
+  <form id="projectForm">
+    <input type="text" id="projectName" placeholder="Nombre del proyecto" required>
+    <button type="submit">Agregar</button>
+  </form>
+  <ul id="projectList"></ul>
+
+  <script>
+    async function fetchProjects() {
+      const res = await fetch('/api/projects');
+      return res.json();
+    }
+
+    async function addProject(name) {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      return res.json();
+    }
+
+    async function deleteProject(id) {
+      await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    }
+
+    function renderProjects(projects) {
+      const list = document.getElementById('projectList');
+      list.innerHTML = '';
+      projects.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = p.name;
+        const btn = document.createElement('button');
+        btn.textContent = 'Eliminar';
+        btn.onclick = async () => {
+          await deleteProject(p.id);
+          loadProjects();
+        };
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+    }
+
+    async function loadProjects() {
+      const projects = await fetchProjects();
+      renderProjects(projects);
+    }
+
+    document.getElementById('projectForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('projectName').value.trim();
+      if (name) {
+        await addProject(name);
+        document.getElementById('projectName').value = '';
+        loadProjects();
+      }
+    };
+
+    loadProjects();
+  </script>
+</body>
+</html>
